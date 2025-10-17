@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-Code Generation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .parameters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .parameter {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, button, select {
+            padding: 8px;
+            margin: 2px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .gcode-preview {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre;
+            font-size: 12px;
+        }
+        .info {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>G-Code Generation Test</h1>
+    
+    <div class="controls">
+        <h2>Generate G-Code for Elevation Relief</h2>
+        
+        <div>
+            <label>Hexagon ID:</label>
+            <input type="text" id="hexagonId" value="861fb0d5fffffff" style="width: 300px;">
+        </div>
+        
+        <div class="section">
+            <h3>Relief Machining Parameters</h3>
+            <div class="parameters">
+                <div class="parameter">
+                    <label>Strategy:</label>
+                    <select id="strategy">
+                        <option value="raster">Raster (with depth passes)</option>
+                        <option value="spiral">Spiral (single pass)</option>
+                    </select>
+                </div>
+                <div class="parameter">
+                    <label>Endmill Diameter (mm):</label>
+                    <input type="number" id="endmillDiameter" value="3.175" step="0.1" min="0.1" max="25">
+                </div>
+                <div class="parameter">
+                    <label>Feed Rate (mm/min):</label>
+                    <input type="number" id="feedRate" value="1000" step="100" min="100" max="5000">
+                </div>
+                <div class="parameter">
+                    <label>Spindle Speed (RPM):</label>
+                    <input type="number" id="spindleSpeed" value="18000" step="1000" min="1000" max="30000">
+                </div>
+                <div class="parameter">
+                    <label>Step Over (mm):</label>
+                    <input type="number" id="stepOver" value="1.5" step="0.5" min="0.1" max="10">
+                </div>
+                <div class="parameter">
+                    <label>Depth per Pass (mm):</label>
+                    <input type="number" id="depthPerPass" value="1.0" step="0.5" min="0.1" max="5">
+                </div>
+                <div class="parameter">
+                    <label>Max Depth (mm):</label>
+                    <input type="number" id="maxDepth" value="10" step="1" min="1" max="50">
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="getPreview()">Get Preview</button>
+                <button onclick="generateGCode()">Generate Relief G-Code</button>
+                <button onclick="downloadGCode()">Download Relief G-Code</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>Contour Cutting Parameters</h3>
+            <div class="parameters">
+                <div class="parameter">
+                    <label>Cut Depth (mm):</label>
+                    <input type="number" id="cutDepth" value="5" step="1" min="0.1" max="50">
+                </div>
+                <div class="parameter">
+                    <label>Offset (mm):</label>
+                    <input type="number" id="offset" value="0" step="0.5" min="-20" max="20">
+                    <small>Negative = inside, Positive = outside</small>
+                </div>
+                <div class="parameter">
+                    <label>Hexagon Size (mm):</label>
+                    <input type="number" id="hexagonSize" value="100" step="10" min="10" max="500">
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="generateContour()">Generate Contour G-Code</button>
+                <button onclick="downloadContour()">Download Contour G-Code</button>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="getTestGCode()">Get Test G-Code</button>
+        </div>
+        
+        <div id="message"></div>
+    </div>
+    
+    <div id="preview" class="preview" style="display: none;">
+        <h3>Preview</h3>
+        <div id="previewContent"></div>
+    </div>
+    
+    <div id="gcodeContainer" style="display: none;">
+        <h3>G-Code Preview (First 100 lines)</h3>
+        <div id="gcodePreview" class="gcode-preview"></div>
+    </div>
+    
+    <script src="test-gcode.js"></script>
+</body>
+</html> 

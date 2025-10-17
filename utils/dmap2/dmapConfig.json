@@ -1,0 +1,46 @@
+{
+  "basic": {
+    "units": "mm",
+    "tool_type": "Ball",
+    "dia": 4.0,
+    "v_angle": 60.0,
+    "yscale": 150.0,
+    "z_cut": -20.0,
+    "z_safe": 10.0,
+    "f_feed": 3000.0,
+    "p_feed": 1500.0,
+    "stepover": 1.0,
+    "scan_pattern": "Rows",
+    "scan_direction": "Alternating",
+    "origin": "Mid-Center",
+    "tolerance": 0.05,
+    "plungetype": "simple",
+    "invert": false,
+    "normalize": true,
+    "cuttop": true
+  },
+  "roughing": {
+    "tool": "Flat",
+    "dia": 6.0,
+    "stepover": 3.0,
+    "depth_per_pass": 3.0,
+    "feed_rate": 5000.0,
+    "plunge_rate": 1500.0,
+    "offset": 1.0
+  },
+  "advanced": {
+    "cutperim": false,
+    "disable_arcs": true,
+    "splitstep": 0.0,
+    "lace_bound": "None",
+    "cangle": 45.0,
+    "gpre": [
+      "G17 G90 M3 S24000",
+      "G4 P5000"
+    ],
+    "gpost": [
+      "M5",
+      "M30"
+    ]
+  }
+}

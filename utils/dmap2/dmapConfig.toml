@@ -1,0 +1,62 @@
+# dmapConfig.toml - Configuration file for G-code generation
+
+[basic]
+# Units: "mm" for metric, "in" for imperial
+units = "mm"
+
+# Tool settings
+tool_type = "Ball"              # "Ball", "Flat", or "V"
+dia = 4.0                       # Tool diameter (3.175mm = 1/8")
+v_angle = 60.0                  # V-bit angle (only used if tool is "V")
+
+# Workpiece dimensions
+yscale = 150.0                  # Image height in real units (mm)
+z_cut = -20.0                   # Maximum cutting depth (mm)
+z_safe = 10.0                   # Safe Z height for rapid moves (mm)
+
+# Feed rates (units per minute)
+f_feed = 3000.0                 # Cutting feed rate
+p_feed = 1500.0                 # Plunge feed rate
+
+# Cutting strategy
+stepover = 1.0                  # Distance between passes (mm)
+scan_pattern = "Rows"           # "Rows", "Columns", or "C then R"
+scan_direction = "Alternating"  # "Positive", "Negative", "Alternating", "Up Mill", "Down Mill"
+origin = "Mid-Center"           # Where (0,0) is located on the workpiece
+
+# Quality settings
+tolerance = 0.05                # Path simplification tolerance (smaller = more accurate)
+plungetype = "simple"           # "simple" or "arc" entry cuts
+
+# Image processing
+invert = false                  # true: white=deep, black=shallow
+normalize = true                # Normalize image brightness
+cuttop = true                   # Cut areas above the surface
+
+[roughing]
+# Roughing pass settings (optional)
+tool = "Flat"                   # Roughing tool type
+dia = 6.0                       # Roughing tool diameter (6.35mm = 1/4")
+stepover = 3.0                  # Roughing stepover (mm)
+depth_per_pass = 3.0            # Roughing depth per pass (mm)
+feed_rate = 5000.0              # Roughing feed rate
+plunge_rate = 1500.0            # Roughing plunge rate
+offset = 1.0                    # Leave this much material for finish pass
+
+[advanced]
+# Advanced settings (usually don't need to change)
+cutperim = false                # Cut perimeter
+disable_arcs = true             # Disable arc moves (use only G01)
+splitstep = 0.0                 # Split step (0 = disabled)
+lace_bound = "None"             # Lace pattern: "None", "Secondary", "Full"
+cangle = 45.0                   # Contact angle for lace patterns
+
+# G-code prefix and suffix commands
+gpre = [
+    "G17 G90 M3 S24000",       # Setup and spindle on
+    "G4 P5000"                 # Wait for spindle to reach speed
+]
+gpost = [
+    "M5",                      # Spindle off
+    "M30"                      # Program end
+]

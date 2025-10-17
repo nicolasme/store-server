@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Specifies the technologies to be used for backend development, including Node.js, Express.js, Postgresql
+globs: */backend/**/*.*
+---
+- Use Node.js with Express.js for the backend.
+- Use Postgresql for the database.
+- Use Express session with connect-pg-simple for authentification and session persistence.
+- Consider Docker for deployment.
+- Use Git for version control.

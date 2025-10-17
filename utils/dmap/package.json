@@ -1,0 +1,38 @@
+{
+  "name": "dmap2gcode-cli",
+  "version": "1.0.0",
+  "description": "Command-line interface for converting depth map images to G-code for CNC machining",
+  "main": "dmap2gcode.js",
+  "scripts": {
+    "test": "node test_dmap2gcode.js",
+    "example": "node example_dmap2gcode.js",
+    "example:basic": "node example_dmap2gcode.js basic",
+    "example:custom": "node example_dmap2gcode.js custom",
+    "example:vbit": "node example_dmap2gcode.js vbit",
+    "example:roughing": "node example_dmap2gcode.js roughing",
+    "example:batch": "node example_dmap2gcode.js batch"
+  },
+  "keywords": [
+    "gcode",
+    "cnc",
+    "depth-map",
+    "image-to-gcode",
+    "cam",
+    "milling",
+    "engraving"
+  ],
+  "author": "Based on dmap2gcode by Scorch",
+  "license": "GPL-3.0",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "requirements": {
+    "python": ">=3.6",
+    "pythonPackages": [
+      "Pillow",
+      "numpy"
+    ]
+  }
+} 

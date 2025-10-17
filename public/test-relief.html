@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relief Image Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            background: #f0f0f0;
+            min-height: 100px;
+        }
+        input, button {
+            margin: 5px;
+            padding: 5px 10px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Elevation Relief Image Test</h1>
+    
+    <div class="controls">
+        <h2>Generate Relief Images</h2>
+        <div>
+            <label>Coordinates: 
+                <input type="number" id="lat" value="48.5" step="0.1" placeholder="Latitude">
+                <input type="number" id="lng" value="2.5" step="0.1" placeholder="Longitude">
+            </label>
+            <label>Zoom: 
+                <input type="number" id="zoom" value="7" min="0" max="15">
+            </label>
+            <button onclick="getHexagon()">Get Hexagon</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>Hexagon ID: 
+                <input type="text" id="hexagonId" value="861fb0d5fffffff" style="width: 200px;">
+            </label>
+            <button onclick="generateImages()">Generate Images</button>
+        </div>
+        <div id="info" style="margin-top: 10px;"></div>
+        <div id="error" class="error"></div>
+    </div>
+    
+    <div class="container" id="images"></div>
+    
+    <script>
+        function showError(message) {
+            console.error('Error:', message);
+            document.getElementById('error').innerHTML = `<strong>Error:</strong> ${message}`;
+        }
+        
+        function clearError() {
+            document.getElementById('error').innerHTML = '';
+        }
+        
+        async function getHexagon() {
+            clearError();
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            const zoom = document.getElementById('zoom').value;
+            
+            console.log('Getting hexagon for:', { lat, lng, zoom });
+            
+            try {
+                const url = `/api/h3/from-coords?lat=${lat}&lng=${lng}&zoom=${zoom}`;
+                console.log('Fetching:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('Response:', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                document.getElementById('hexagonId').value = data.hexagonId;
+                document.getElementById('info').innerHTML = `
+                    <div class="success">
+                        <strong>Hexagon:</strong> ${data.hexagonId}<br>
+                        <strong>Resolution:</strong> ${data.resolution}<br>
+                        <strong>Area:</strong> ${data.areaKm2.toFixed(2)} km²
+                    </div>
+                `;
+            } catch (error) {
+                showError('Failed to get hexagon: ' + error.message);
+            }
+        }
+        
+        async function generateImages() {
+            clearError();
+            const hexagonId = document.getElementById('hexagonId').value;
+            
+            if (!hexagonId) {
+                showError('Please enter a hexagon ID or get one from coordinates');
+                return;
+            }
+            
+            console.log('Generating images for hexagon:', hexagonId);
+            
+            const container = document.getElementById('images');
+            container.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                // Get metadata first
+                const metaUrl = `/api/h3/${hexagonId}/relief-image/metadata`;
+                console.log('Fetching metadata:', metaUrl);
+                
+                const metaResponse = await fetch(metaUrl);
+                const metadata = await metaResponse.json();
+                
+                console.log('Metadata response:', metadata);
+                
+                if (!metaResponse.ok) {
+                    throw new Error(metadata.error || 'Failed to get metadata');
+                }
+                
+                // Generate different versions
+                const images = [
+                    {
+                        title: 'Relief Image (512x512)',
+                        url: `/api/h3/${hexagonId}/relief-image?width=512&height=512`
+                    },
+                    {
+                        title: 'Relief Image (256x256)',
+                        url: `/api/h3/${hexagonId}/relief-image?width=256&height=256`
+                    },
+                    {
+                        title: 'With Contours (25m)',
+                        url: `/api/h3/${hexagonId}/relief-image/contour?interval=25`
+                    },
+                    {
+                        title: 'With Contours (50m)',
+                        url: `/api/h3/${hexagonId}/relief-image/contour?interval=50`
+                    }
+                ];
+                
+                container.innerHTML = `
+                    <div class="image-box" style="grid-column: 1 / -1;">
+                        <h3>Metadata</h3>
+                        <p>
+                            <strong>Center:</strong> ${metadata.center.lat.toFixed(4)}, ${metadata.center.lng.toFixed(4)}<br>
+                            <strong>Elevation Range:</strong> ${metadata.elevationRange.min}m - ${metadata.elevationRange.max}m<br>
+                            <strong>Area:</strong> ${metadata.areaKm2.toFixed(2)} km²
+                        </p>
+                    </div>
+                `;
+                
+                images.forEach(img => {
+                    console.log('Adding image:', img.title, img.url);
+                    container.innerHTML += `
+                        <div class="image-box">
+                            <h3>${img.title}</h3>
+                            <img src="${img.url}" alt="${img.title}" 
+                                 onerror="this.style.background='#ffcccc'; this.alt='Failed to load image'">
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                showError('Failed to generate images: ' + error.message);
+                container.innerHTML = '';
+            }
+        }
+        
+        // Check if console is available
+        if (typeof console === 'undefined') {
+            window.console = {
+                log: function() {},
+                error: function() {}
+            };
+        }
+        
+        // Generate initial images when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, generating initial images...');
+            // Only generate if we have a hexagon ID
+            if (document.getElementById('hexagonId').value) {
+                generateImages();
+            }
+        });
+    </script>
+</body>
+</html> 
