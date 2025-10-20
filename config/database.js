@@ -145,6 +145,81 @@ async function initializeTables() {
       END $$;
     `);
 
+    // Create gpx_tracks table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS gpx_tracks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        filename VARCHAR(255) NOT NULL,
+        original_filename VARCHAR(255) NOT NULL,
+        file_path TEXT NOT NULL,
+        file_size INTEGER,
+        file_type VARCHAR(10),
+        geojson_filename VARCHAR(255),
+        geojson_path TEXT,
+        conversion_status VARCHAR(50) DEFAULT 'pending',
+        conversion_error TEXT,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add new columns to existing gpx_tracks table (migration) - MUST happen before creating indexes
+    await client.query(`
+      DO $$
+      BEGIN
+        -- Add file_type column
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'gpx_tracks' AND column_name = 'file_type'
+        ) THEN
+          ALTER TABLE gpx_tracks ADD COLUMN file_type VARCHAR(10);
+        END IF;
+
+        -- Add geojson_filename column
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'gpx_tracks' AND column_name = 'geojson_filename'
+        ) THEN
+          ALTER TABLE gpx_tracks ADD COLUMN geojson_filename VARCHAR(255);
+        END IF;
+
+        -- Add geojson_path column
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'gpx_tracks' AND column_name = 'geojson_path'
+        ) THEN
+          ALTER TABLE gpx_tracks ADD COLUMN geojson_path TEXT;
+        END IF;
+
+        -- Add conversion_status column
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'gpx_tracks' AND column_name = 'conversion_status'
+        ) THEN
+          ALTER TABLE gpx_tracks ADD COLUMN conversion_status VARCHAR(50) DEFAULT 'pending';
+        END IF;
+
+        -- Add conversion_error column
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'gpx_tracks' AND column_name = 'conversion_error'
+        ) THEN
+          ALTER TABLE gpx_tracks ADD COLUMN conversion_error TEXT;
+        END IF;
+      END $$;
+    `);
+
+    // Create indexes for gpx_tracks table (after columns exist)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_gpx_tracks_project_id ON gpx_tracks(project_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_gpx_tracks_uploaded_at ON gpx_tracks(uploaded_at)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_gpx_tracks_conversion_status ON gpx_tracks(conversion_status)
+    `);
+
     await client.query('COMMIT');
     console.log('Database tables initialized successfully');
   } catch (error) {

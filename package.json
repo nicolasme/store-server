@@ -19,7 +19,9 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@tmcw/togeojson": "^7.1.2",
     "@turf/turf": "^7.2.0",
+    "@xmldom/xmldom": "^0.8.11",
     "axios": "^1.10.0",
     "canvas": "^3.1.2",
     "cors": "^2.8.5",
@@ -28,6 +30,7 @@
     "h3-js": "^4.1.0",
     "helmet": "^8.0.0",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "pg": "^8.11.3",
     "sharp": "^0.33.5"
   }

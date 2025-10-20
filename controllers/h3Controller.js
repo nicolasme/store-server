@@ -55,7 +55,7 @@ async function coordinatesToH3(req, res, next) {
         coordinates: neighborInfo.boundary // Map boundary to coordinates for consistency
       };
     });
-
+ 
     res.json({
       hexagonId,
       resolution: hexInfo.resolution,
