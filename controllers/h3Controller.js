@@ -7,9 +7,6 @@ const elevationService = require('../services/elevationService');
 async function coordinatesToH3(req, res, next) {
   try {
     const { lat, lng, zoom } = req.query;
-
-    console.log(req.headers['x-client-id'])
-    console.log(req.headers['x-customer-id'])
     
     // Validate input
     if (!lat || !lng) {

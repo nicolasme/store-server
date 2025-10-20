@@ -74,6 +74,7 @@ async function generateRoadsImage(hexId, options = {}) {
 
   // Get the hexagon boundary as GeoJSON
   const hexBoundary = h3.cellToBoundary(hexId);
+  const hexagonResolution = h3.getResolution(hexId);
 
   // Convert to [lng, lat] format (h3 returns [lat, lng])
   const boundary = hexBoundary.map((point) => [point[1], point[0]]);
@@ -89,7 +90,7 @@ async function generateRoadsImage(hexId, options = {}) {
   } else {
     console.log(`Fetching GeoJSON data for hexagon ${hexId}`);
     // Fetch GeoJSON data for roads within the bounding box
-    geojson = await fetchRoadsGeoJSON(paddedBbox);
+    geojson = await fetchRoadsGeoJSON(paddedBbox, hexagonResolution);
     // Save GeoJSON data to file
     saveGeoJSON(geojson, hexId);
   }
@@ -264,31 +265,66 @@ async function makeOutsideHexagonTransparent(
  * @param {Array} bbox - Bounding box as [west, south, east, north]
  * @returns {Object} GeoJSON data for roads
  */
-async function fetchRoadsGeoJSON(bbox) {
+async function fetchRoadsGeoJSON(bbox, hexagonResolution) {
   const [west, south, east, north] = bbox;
 
-  // Overpass API query to get all roads within the bounding box
-  const query = `
-    [out:json][timeout:25];
-    (
-      way["highway"~"motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road|link"](${south},${west},${north},${east});
-    );
-    out geom;
-    `;
+  // Fetch roads types (way) depending on hexagon resolution
+  const roadTypes = {
+    motorway: {
+      way: "motorway",
+      resolution: 0,
+    },
+    trunk: {
+      way: "trunk",
+      resolution: 0,
+    },
+    primary: {
+      way: "primary",
+      resolution: 5,
+    },
+    secondary: {
+      way: "secondary",
+      resolution: 7,
+    },
+    tertiary: {
+      way: "tertiary",
+      resolution: 7,
+    },
+    unclassified: {
+      way: "unclassified",
+      resolution: 6,
+    },
+    residential: {
+      way: "residential",
+      resolution: 8,
+    },
+    road: {
+      way: "road",
+      resolution: 8,
+    },
+  };
 
-  // Overpass API query to get all roads within the bounding box
-  // const query = `
-  // [out:json][timeout:25];
-  // (
-  //   way["highway"~"motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|road|link"](${south},${west},${north},${east});
-  // );
-  // out geom;
-  // `;
+  let queryRoadTypes = [];
+  for (const roadType in roadTypes) {
+    if (roadTypes[roadType].resolution <= hexagonResolution) {
+      queryRoadTypes.push(roadTypes[roadType].way);
+    }
+  }
+
+  const dynamicQuery = `
+      [out:json][timeout:25];
+      (
+        way["highway"~"${queryRoadTypes.join(
+          "|"
+        )}"](${south},${west},${north},${east});
+      );
+      out geom;
+      `;
 
   // Use Overpass API to get road data
   const response = await axios.post(
     "https://overpass-api.de/api/interpreter",
-    query,
+    dynamicQuery,
     {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -520,7 +556,7 @@ async function generateRoadsGcode(
   );
   // Densify lines to ensure no two points are more than 2 pixels apart
   const densifiedLines = densifyLines(lines, 2);
-  
+
   const linesWithHeight = await addHeightToLines(
     densifiedLines,
     dmapImage,
@@ -1012,39 +1048,39 @@ function scaleAndConvertGeoJSONForGcodeProcessing(
  * Densifies lines by adding intermediate points so that no two consecutive points
  * are more than maxDistance pixels apart. This ensures better precision when
  * sampling heights from the DMAP image.
- * 
+ *
  * @param {Array} lines - Array of lines, where each line is an array of [x, y] points
  * @param {number} maxDistance - Maximum distance allowed between consecutive points (in pixels)
  * @returns {Array} - Array of densified lines with additional intermediate points
  */
 function densifyLines(lines, maxDistance = 2) {
   const densifiedLines = [];
-  
+
   for (const line of lines) {
     if (line.length < 2) {
       // Line with less than 2 points doesn't need densification
       densifiedLines.push([...line]);
       continue;
     }
-    
+
     const densifiedLine = [];
     densifiedLine.push([...line[0]]); // Add first point
-    
+
     for (let i = 1; i < line.length; i++) {
       const prevPoint = line[i - 1];
       const currentPoint = line[i];
-      
+
       // Calculate distance between consecutive points
       const dx = currentPoint[0] - prevPoint[0];
       const dy = currentPoint[1] - prevPoint[1];
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (distance > maxDistance) {
         // Need to add intermediate points
         const numSegments = Math.ceil(distance / maxDistance);
         const stepX = dx / numSegments;
         const stepY = dy / numSegments;
-        
+
         // Add intermediate points (skip the first one as it's already added)
         for (let j = 1; j < numSegments; j++) {
           const interpolatedX = prevPoint[0] + stepX * j;
@@ -1052,14 +1088,14 @@ function densifyLines(lines, maxDistance = 2) {
           densifiedLine.push([interpolatedX, interpolatedY]);
         }
       }
-      
+
       // Add the current point
       densifiedLine.push([...currentPoint]);
     }
-    
+
     densifiedLines.push(densifiedLine);
   }
-  
+
   return densifiedLines;
 }
 

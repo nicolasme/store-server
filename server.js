@@ -9,6 +9,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const indexRoutes = require("./routes/indexRoutes");
+const db = require("./config/database");
 
 // Create Express app
 const app = express();
@@ -46,9 +47,22 @@ app.use((req, res) => {
   });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Elevation Simple server running on port ${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`HGT data path: ${process.env.HGT_DATA_PATH || "./data/hgt"}`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Initialize database tables
+    await db.initializeTables();
+    
+    // Start server
+    app.listen(port, () => {
+      console.log(`Elevation Simple server running on port ${port}`);
+      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`HGT data path: ${process.env.HGT_DATA_PATH || "./data/hgt"}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
