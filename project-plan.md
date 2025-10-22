@@ -142,7 +142,7 @@ const bounds = h3.cellToBoundary(hexagonId);
 ## Environment Variables (.env)
 ```
 PORT=3000
-HGT_DATA_PATH=./data/hgt
+HGT_DIR=./data/hgt
 CACHE_ENABLED=true
 CACHE_TTL=3600
 MAX_HEXAGON_RESOLUTION=9

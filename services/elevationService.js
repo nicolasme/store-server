@@ -24,7 +24,7 @@ async function getHgtData(filename) {
   }
   
   // Load from file
-  const hgtPath = process.env.HGT_DATA_PATH || './data/hgt';
+  const hgtPath = process.env.HGT_DIR || './data/hgt';
   const filepath = path.join(hgtPath, filename);
   
   try {
@@ -207,7 +207,7 @@ async function getHexagonElevationGrid(h3Index, gridSize = 256) {
  * @returns {Promise<Array>} List of available HGT files
  */
 async function getAvailableHgtFiles() {
-  const hgtPath = process.env.HGT_DATA_PATH || './data/hgt';
+  const hgtPath = process.env.HGT_DIR || './data/hgt';
   
   try {
     const files = await fs.readdir(hgtPath);

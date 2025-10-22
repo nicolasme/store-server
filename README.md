@@ -36,7 +36,7 @@ The application uses environment variables for configuration:
 
 - `PORT` - Server port (default: 3000)
 - `NODE_ENV` - Environment (development/production)
-- `HGT_DATA_PATH` - Path to HGT files (default: ./data/hgt)
+- `HGT_DIR` - Path to HGT files (default: ./data/hgt)
 
 Machining parameters can be configured in `config/constants.js`.
 

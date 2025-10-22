@@ -11,7 +11,14 @@ router.use((req, res, next) => {
     clientId: req.headers['x-client-id'],
     customerId: req.headers['x-customer-id'] || null
   };
+  // if(!req.user.clientId && !req.user.customerId) {
+  //   return res.status(401).json({ error: 'Unauthorized' });
+  // }
   next();
+});
+
+router.get("/", (req, res) => {
+  res.send("Hello World");
 });
 
 router.use("/h3", h3Routes);
